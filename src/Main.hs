@@ -53,7 +53,7 @@ menuKelolaBarang catalog = do
             menuKelolaBarang catalog
 
 -- | 3. Loop Sub-Menu: Transaksi Penjualan
-menuTransaksi :: Catalog -> Cart -> History -> IO (Catalog, History)
+menuTransaksi :: Catalog -> Cart -> History -> IO (Catalog, Cart, History)
 menuTransaksi catalog cart history = do
     printSectionGap
     printHeader "Transaksi Penjualan"
@@ -85,13 +85,13 @@ menuTransaksi catalog cart history = do
                 then do
                     printWarning "Keranjang kosong. Tambahkan barang terlebih dahulu."
                     menuTransaksi catalog cart history
-                else checkout catalog cart history -- checkout me-return (Catalog, History)
+                else checkout catalog cart history -- checkout me-return (Catalog, Cart, History)
         "5" -> do
             printSectionGap
             printSuccess "Transaksi dibatalkan. Keranjang dikosongkan."
             printSectionGap
-            return (catalog, history)
-        "0" -> return (catalog, history)
+            return (catalog, [], history)
+        "0" -> return (catalog, cart, history)
         _   -> do 
             printWarning "Pilihan tidak valid."
             menuTransaksi catalog cart history
@@ -188,8 +188,8 @@ mainMenu fromSubmenu catalog cart history = do
             newCatalog <- menuKelolaBarang catalog
             mainMenu True newCatalog cart history
         "2" -> do
-            (newCatalog, newHistory) <- menuTransaksi catalog cart history
-            mainMenu True newCatalog [] newHistory -- Cart dikosongkan setelah kembali ke Main Menu
+            (newCatalog, newCart, newHistory) <- menuTransaksi catalog cart history
+            mainMenu True newCatalog newCart newHistory
         "3" -> do
             menuRiwayat history
             mainMenu True catalog cart history

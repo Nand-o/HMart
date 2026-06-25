@@ -102,7 +102,7 @@ pendapatan history
         printSectionGap
         printKeyValue "Jumlah transaksi" (show (length history) ++ " item")
         printKeyValue "Total uang masuk" ("Rp " ++ formatNum totalMasuk)
-        printKeyValue "Total nilai penjualan" ("Rp " ++ formatNum totalNilai)
+        printKeyValue "Total penjualan" ("Rp " ++ formatNum totalNilai)
         printKeyValue "Total kembalian" ("Rp " ++ formatNum totalKembalian)
         printSectionGap
         putStrLn $ "  Verifikasi: " ++ formatNum totalMasuk ++ " - " ++ formatNum totalKembalian ++ " = " ++ formatNum totalNilai

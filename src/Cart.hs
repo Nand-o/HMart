@@ -107,7 +107,7 @@ hapusDariKeranjang cart
                 return newCart
 
 -- Checkout dan simpan transaksi
-checkout :: Catalog -> Cart -> History -> IO (Catalog, History)
+checkout :: Catalog -> Cart -> History -> IO (Catalog, Cart, History)
 checkout catalog cart history = do
     let total = hitungTotal cart
     printSectionGap
@@ -123,7 +123,7 @@ checkout catalog cart history = do
             printSectionGap
             printWarning $ "Uang kurang! Kurang Rp" ++ formatNum (total - paid)
             putStrLn "Silakan batalkan transaksi atau hapus barang jika perlu."
-            return (catalog, history)
+            return (catalog, cart, history)
         else do
             let change = paid - total
             let newTransId = length history + 1
@@ -143,4 +143,4 @@ checkout catalog cart history = do
             printSectionGap
             printSuccess "Transaksi berhasil! Terima kasih."
             printSectionGap
-            return (newCatalog, newHistory)
+            return (newCatalog, [], newHistory)
