@@ -1,6 +1,7 @@
 module Utils where
 
 import Data.Time (getCurrentTime, formatTime, defaultTimeLocale)
+import System.IO (hFlush, stdout)
 
 screenWidth :: Int
 screenWidth = 58
@@ -87,6 +88,11 @@ printWarning message = putStrLn $ colorText Yellow $ "[!] " ++ message
 
 printError :: String -> IO ()
 printError message = putStrLn $ colorText Red $ "[!] " ++ message
+
+clearScreen :: IO ()
+clearScreen = do
+    putStr "\ESC[2J\ESC[H"
+    hFlush stdout
 
 printExitScreen :: IO ()
 printExitScreen = do

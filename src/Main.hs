@@ -168,8 +168,9 @@ tentangProgram = do
     putStrLn "    [v] Algebraic Data Types & Pattern Matching"
 
 -- | 7. Loop Menu Utama (Jantung Program)
-mainMenu :: Catalog -> Cart -> History -> IO ()
-mainMenu catalog cart history = do
+mainMenu :: Bool -> Catalog -> Cart -> History -> IO ()
+mainMenu fromSubmenu catalog cart history = do
+    if fromSubmenu then clearScreen else return ()
     printSectionGap
     printHeader "HMart Cashier"
     printSectionGap
@@ -185,23 +186,24 @@ mainMenu catalog cart history = do
     case choice of
         "1" -> do
             newCatalog <- menuKelolaBarang catalog
-            mainMenu newCatalog cart history
+            mainMenu True newCatalog cart history
         "2" -> do
             (newCatalog, newHistory) <- menuTransaksi catalog cart history
-            mainMenu newCatalog [] newHistory -- Cart dikosongkan setelah kembali ke Main Menu
+            mainMenu True newCatalog [] newHistory -- Cart dikosongkan setelah kembali ke Main Menu
         "3" -> do
             menuRiwayat history
-            mainMenu catalog cart history
+            mainMenu True catalog cart history
         "4" -> do
             menuLaporan catalog history
-            mainMenu catalog cart history
+            mainMenu True catalog cart history
         "5" -> do
+            clearScreen
             tentangProgram
-            mainMenu catalog cart history
+            mainMenu False catalog cart history
         "0" -> printExitScreen
         _   -> do
             printWarning "Pilihan tidak valid. Masukkan angka 0-5."
-            mainMenu catalog cart history
+            mainMenu True catalog cart history
 
 -- | 8. Entry Point Aplikasi
 main :: IO ()
@@ -209,4 +211,4 @@ main = do
     hSetBuffering stdout NoBuffering -- Agar output input selaras di terminal
     putStrLn "\nSelamat datang di HMart Cashier System!"
     -- Inisialisasi awal program: catalog terisi data dummy, cart kosong, history kosong
-    mainMenu defaultProducts [] []
+    mainMenu False defaultProducts [] []
