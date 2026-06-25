@@ -13,9 +13,11 @@ totalPenjualan :: History -> IO ()
 totalPenjualan history = do
     -- HOF: foldl untuk akumulasi total nilai penjualan
     let grandTotal = foldl (\acc t -> acc + transactionTotal t) 0 history 
+    printSectionGap
     putStrLn "\n--- Total Penjualan ---"
-    putStrLn $ "Jumlah transaksi: " ++ show (length history)
-    putStrLn $ "Total penjualan : Rp " ++ formatNum grandTotal
+    printSectionGap
+    printKeyValue "Jumlah transaksi" (show (length history) ++ " item")
+    printKeyValue "Total penjualan" ("Rp " ++ formatNum grandTotal)
 
 -- | D.2 - Laporan Barang Terlaris
 -- Helper fungsi rekursif untuk menghitung total penjualan per nama barang
@@ -27,8 +29,9 @@ updateTally ((n, c):rest) nm q
 
 barangTerlaris :: History -> IO ()
 barangTerlaris history
-    | null history = putStrLn "[!] Belum ada transaksi."
+    | null history = printWarning "Belum ada transaksi."
     | otherwise = do
+        printSectionGap
         -- HOF: concatMap untuk membongkar daftar di dalam daftar
         let allItems = concatMap transactionItems history 
             
@@ -43,7 +46,8 @@ barangTerlaris history
             sorted = sortBy (\(_, a) (_, b) -> compare b a) tally 
             top5 = take 5 sorted
             
-        putStrLn "\n--- Barang Terlaris (Top 5) ---"
+        putStrLn "--- Barang Terlaris (Top 5) ---"
+        printSectionGap
         putStrLn "+---+------------------------+-------------+"
         putStrLn "| # | Nama Barang            | Terjual     |"
         putStrLn "+---+------------------------+-------------+"
@@ -61,9 +65,11 @@ stokMenipis catalog = do
     -- HOF: filter untuk memisahkan barang dengan stok rendah
     let lowStock = filter (\p -> productStock p <= stockThreshold) catalog 
     if null lowStock
-        then putStrLn "[OK] Semua stok aman (tidak ada yang di bawah batas minimum)."
+        then printSuccess "Semua stok aman (tidak ada yang di bawah batas minimum)."
         else do
-            putStrLn $ "\n[!] " ++ show (length lowStock) ++ " barang perlu direstok:"
+            printSectionGap
+            printWarning $ show (length lowStock) ++ " barang perlu direstok."
+            printSectionGap
             putStrLn "+----+------------------------+-------+"
             putStrLn "| ID | Nama Barang            | Stok  |"
             putStrLn "+----+------------------------+-------+"
@@ -84,16 +90,19 @@ stokMenipisLC catalog = [p | p <- catalog, productStock p <= stockThreshold]
 -- | D.4 - Pendapatan Kasir
 pendapatan :: History -> IO ()
 pendapatan history
-    | null history = putStrLn "[!] Belum ada transaksi."
+    | null history = printWarning "Belum ada transaksi."
     | otherwise = do
         -- HOF: Tiga foldl yang berjalan terpisah
         let totalMasuk     = foldl (\acc t -> acc + transactionPaid t) 0 history 
             totalNilai     = foldl (\acc t -> acc + transactionTotal t) 0 history 
             totalKembalian = foldl (\acc t -> acc + transactionChange t) 0 history 
             
-        putStrLn "\n--- Laporan Pendapatan ---"
-        putStrLn $ "Jumlah transaksi      : " ++ show (length history)
-        putStrLn $ "Total uang masuk      : Rp " ++ formatNum totalMasuk
-        putStrLn $ "Total nilai penjualan : Rp " ++ formatNum totalNilai
-        putStrLn $ "Total kembalian       : Rp " ++ formatNum totalKembalian
-        putStrLn $ "(Verifikasi: " ++ formatNum totalMasuk ++ " - " ++ formatNum totalKembalian ++ " = " ++ formatNum totalNilai ++ ")"
+        printSectionGap
+        putStrLn "--- Laporan Pendapatan ---"
+        printSectionGap
+        printKeyValue "Jumlah transaksi" (show (length history) ++ " item")
+        printKeyValue "Total uang masuk" ("Rp " ++ formatNum totalMasuk)
+        printKeyValue "Total nilai penjualan" ("Rp " ++ formatNum totalNilai)
+        printKeyValue "Total kembalian" ("Rp " ++ formatNum totalKembalian)
+        printSectionGap
+        putStrLn $ "  Verifikasi: " ++ formatNum totalMasuk ++ " - " ++ formatNum totalKembalian ++ " = " ++ formatNum totalNilai

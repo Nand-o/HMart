@@ -26,9 +26,11 @@ defaultProducts =
 -- | 2. Loop Sub-Menu: Kelola Barang
 menuKelolaBarang :: Catalog -> IO Catalog
 menuKelolaBarang catalog = do
-    putStrLn ""
+    printSectionGap
     printHeader "Kelola Barang"
-    putStrLn $ "  [" ++ show (length catalog) ++ " barang terdaftar]"
+    printSectionGap
+    printKeyValue "Barang terdaftar" (show (length catalog) ++ " item")
+    printSectionGap
     putStrLn "  1. Lihat Daftar Barang"
     putStrLn "  2. Tambah Barang"
     putStrLn "  3. Edit Barang"
@@ -47,16 +49,18 @@ menuKelolaBarang catalog = do
         "5" -> cariBarang catalog >> menuKelolaBarang catalog
         "0" -> return catalog -- Keluar dari rekursi, kembalikan state catalog ke Main Menu
         _   -> do 
-            putStrLn "[!] Pilihan tidak valid."
+            printWarning "Pilihan tidak valid."
             menuKelolaBarang catalog
 
 -- | 3. Loop Sub-Menu: Transaksi Penjualan
 menuTransaksi :: Catalog -> Cart -> History -> IO (Catalog, History)
 menuTransaksi catalog cart history = do
-    putStrLn ""
+    printSectionGap
     printHeader "Transaksi Penjualan"
-    putStrLn $ "  Keranjang aktif: " ++ show (length cart) ++ " item"
-    putStrLn $ "  Total          : Rp " ++ formatNum (hitungTotal cart)
+    printSectionGap
+    printKeyValue "Keranjang aktif" (show (length cart) ++ " item")
+    printKeyValue "Total belanja" ("Rp " ++ formatNum (hitungTotal cart))
+    printSectionGap
     putStrLn "  1. Tambah Barang ke Keranjang"
     putStrLn "  2. Lihat Keranjang"
     putStrLn "  3. Hapus Barang dari Keranjang"
@@ -79,23 +83,27 @@ menuTransaksi catalog cart history = do
         "4" -> do
             if null cart
                 then do
-                    putStrLn "[!] Keranjang kosong. Tambahkan barang terlebih dahulu."
+                    printWarning "Keranjang kosong. Tambahkan barang terlebih dahulu."
                     menuTransaksi catalog cart history
                 else checkout catalog cart history -- checkout me-return (Catalog, History)
         "5" -> do
-            putStrLn "[OK] Transaksi dibatalkan. Keranjang dikosongkan."
+            printSectionGap
+            printSuccess "Transaksi dibatalkan. Keranjang dikosongkan."
+            printSectionGap
             return (catalog, history)
         "0" -> return (catalog, history)
         _   -> do 
-            putStrLn "[!] Pilihan tidak valid."
+            printWarning "Pilihan tidak valid."
             menuTransaksi catalog cart history
 
 -- | 4. Loop Sub-Menu: Riwayat Transaksi
 menuRiwayat :: History -> IO ()
 menuRiwayat history = do
-    putStrLn ""
+    printSectionGap
     printHeader "Riwayat Transaksi"
-    putStrLn $ "  Total transaksi: " ++ show (length history)
+    printSectionGap
+    printKeyValue "Total transaksi" (show (length history) ++ " item")
+    printSectionGap
     putStrLn "  1. Lihat Semua Transaksi"
     putStrLn "  2. Cari Transaksi Berdasarkan ID"
     putStrLn "  3. Detail Transaksi"
@@ -109,14 +117,15 @@ menuRiwayat history = do
         "3" -> detailTransaksi history >> menuRiwayat history
         "0" -> return ()
         _   -> do 
-            putStrLn "[!] Pilihan tidak valid."
+            printWarning "Pilihan tidak valid."
             menuRiwayat history
 
 -- | 5. Loop Sub-Menu: Laporan Penjualan
 menuLaporan :: Catalog -> History -> IO ()
 menuLaporan catalog history = do
-    putStrLn ""
+    printSectionGap
     printHeader "Laporan Penjualan"
+    printSectionGap
     putStrLn "  1. Total Penjualan (Keseluruhan)"
     putStrLn "  2. Barang Terlaris"
     putStrLn "  3. Stok Barang Menipis"
@@ -132,37 +141,38 @@ menuLaporan catalog history = do
         "4" -> pendapatan history >> menuLaporan catalog history
         "0" -> return ()
         _   -> do 
-            putStrLn "[!] Pilihan tidak valid."
+            printWarning "Pilihan tidak valid."
             menuLaporan catalog history
 
 -- | 6. Informasi Statis Tentang Program
 tentangProgram :: IO ()
 tentangProgram = do
-    let line = replicate 45 '='
-    putStrLn line
-    putStrLn "              HMart Cashier System"
-    putStrLn line
-    putStrLn "  Versi          : 1.0.0"
-    putStrLn "  Bahasa         : Haskell (GHC)"
-    putStrLn "  Mata Kuliah    : Pemrograman Deklaratif"
-    putStrLn "  Kelompok       : 1"
-    putStrLn "  Anggota        : "
+    printSectionGap
+    printHeader "HMart Cashier System"
+    printSectionGap
+    printKeyValue "Versi" "1.0.0"
+    printKeyValue "Bahasa" "Haskell (GHC)"
+    printKeyValue "Mata Kuliah" "Pemrograman Deklaratif"
+    printKeyValue "Kelompok" "1"
+    printSectionGap
+    putStrLn "  Anggota"
     putStrLn "    1. Ernando Febrian           - 1313624021"
     putStrLn "    2. Candra Afriansyah         - 1313624023"
     putStrLn "    3. Sukarno Adi Prasetyo      - 1313624010"
     putStrLn "    4. Nandana Ammar Triabimanyu - 1313624030"
-    putStrLn "  Konsep Haskell :"
+    printSectionGap
+    putStrLn "  Konsep Haskell"
     putStrLn "    [v] Rekursi & Pure Functions"
     putStrLn "    [v] Map, Filter, Foldl (HOF)"
     putStrLn "    [v] List Comprehension"
     putStrLn "    [v] Algebraic Data Types & Pattern Matching"
-    putStrLn line
 
 -- | 7. Loop Menu Utama (Jantung Program)
 mainMenu :: Catalog -> Cart -> History -> IO ()
 mainMenu catalog cart history = do
-    putStrLn ""
+    printSectionGap
     printHeader "HMart Cashier"
+    printSectionGap
     putStrLn "  1. Kelola Barang"
     putStrLn "  2. Transaksi Penjualan"
     putStrLn "  3. Riwayat Transaksi"
@@ -188,9 +198,9 @@ mainMenu catalog cart history = do
         "5" -> do
             tentangProgram
             mainMenu catalog cart history
-        "0" -> putStrLn "\nTerima kasih telah menggunakan HMart. Sampai jumpa!"
+        "0" -> printExitScreen
         _   -> do
-            putStrLn "[!] Pilihan tidak valid. Masukkan angka 0-5."
+            printWarning "Pilihan tidak valid. Masukkan angka 0-5."
             mainMenu catalog cart history
 
 -- | 8. Entry Point Aplikasi

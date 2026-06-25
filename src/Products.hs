@@ -16,32 +16,38 @@ printProductRow p = putStrLn $
 -- Menampilkan seluruh katalog barang
 lihatDaftarBarang :: Catalog -> IO ()
 lihatDaftarBarang catalog
-    | null catalog = putStrLn "[!] Belum ada barang di katalog."
+    | null catalog = printWarning "Belum ada barang di katalog."
     | otherwise = do
+        printSectionGap
         putStrLn "+----+----------------------+---------------+-------+"
         putStrLn "| ID | Nama Barang          | Harga         | Stok  |"
         putStrLn "+----+----------------------+---------------+-------+"
         -- HOF: mapM_ (monadic map) untuk mencetak tiap elemen list ke IO action
         mapM_ printProductRow catalog 
         putStrLn "+----+----------------------+---------------+-------+"
-        putStrLn $ " Total: " ++ show (length catalog) ++ " barang."
+        printSectionGap
+        printKeyValue "Total barang" (show (length catalog) ++ " item")
 
 -- Menampilkan katalog barang (khusus untuk hasil filter/pencarian)
 lihatDaftarBarangList :: Catalog -> IO ()
 lihatDaftarBarangList filtered
-    | null filtered = putStrLn "[!] Tidak ada barang yang cocok dengan pencarian."
+    | null filtered = printWarning "Tidak ada barang yang cocok dengan pencarian."
     | otherwise = do
+        printSectionGap
         putStrLn "+----+----------------------+---------------+-------+"
         putStrLn "| ID | Nama Barang          | Harga         | Stok  |"
         putStrLn "+----+----------------------+---------------+-------+"
         mapM_ printProductRow filtered
         putStrLn "+----+----------------------+---------------+-------+"
-        putStrLn $ " Ditemukan: " ++ show (length filtered) ++ " barang."
+        printSectionGap
+        printKeyValue "Ditemukan" (show (length filtered) ++ " item")
 
 -- Menambah barang baru
 tambahBarang :: Catalog -> IO Catalog
 tambahBarang catalog = do
-    putStrLn "\n--- Tambah Barang Baru ---"
+    printSectionGap
+    printHeader "Tambah Barang Baru"
+    printSectionGap
     putStr "Nama barang      : "; nama <- getLine
     putStr "Harga satuan (Rp): "; hargaStr <- getLine
     putStr "Stok awal        : "; stokStr <- getLine
@@ -57,13 +63,15 @@ tambahBarang catalog = do
             return catalog
         else do
             let prod = Product newId nama harga stok
-            putStrLn $ "[OK] '" ++ nama ++ "' berhasil ditambahkan (ID: " ++ show newId ++ ")."
+            printSectionGap
+            printSuccess $ "'" ++ nama ++ "' berhasil ditambahkan (ID: " ++ show newId ++ ")."
             return (catalog ++ [prod])
 
 -- Mengedit data barang
 editBarang :: Catalog -> IO Catalog
 editBarang catalog = do
     lihatDaftarBarang catalog
+    printSectionGap
     putStr "\nID barang yang akan diedit: "; idStr <- getLine
     let targetId = readInt idStr 0
         -- HOF: filter
@@ -71,7 +79,7 @@ editBarang catalog = do
         
     if null found
         then do 
-            putStrLn "[!] Barang tidak ditemukan."
+            printWarning "Barang tidak ditemukan."
             return catalog
         else do
             let lama = head found
@@ -91,27 +99,32 @@ editBarang catalog = do
                                 else p
                             ) catalog
                             
-            putStrLn "[OK] Barang berhasil diperbarui."
+            printSectionGap
+            printSuccess "Barang berhasil diperbarui."
             return newCatalog
 
 -- Menghapus barang
 hapusBarang :: Catalog -> IO Catalog
 hapusBarang catalog = do
     lihatDaftarBarang catalog
+    printSectionGap
     putStr "\nID barang yang akan dihapus: "; idStr <- getLine
     let targetId = readInt idStr 0
         -- HOF: filter untuk membuang barang
         newCatalog = filter (\p -> productId p /= targetId) catalog
         
     if length newCatalog == length catalog
-        then putStrLn "[!] Barang tidak ditemukan."
-        else putStrLn "[OK] Barang berhasil dihapus."
+        then printWarning "Barang tidak ditemukan."
+        else do
+            printSectionGap
+            printSuccess "Barang berhasil dihapus."
     return newCatalog
 
 -- Mencari barang
 cariBarang :: Catalog -> IO ()
 cariBarang catalog = do
-    putStr "\nKata kunci pencarian: "; keyword <- getLine
+    printSectionGap
+    putStr "Kata kunci pencarian: "; keyword <- getLine
     let kw = map toLower keyword -- HOF: map pada string
         -- HOF: filter dan map
         results = filter (\p -> kw `isInfixOf` map toLower (productName p)) catalog

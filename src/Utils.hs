@@ -1,7 +1,35 @@
 module Utils where
 
-import Types
 import Data.Time (getCurrentTime, formatTime, defaultTimeLocale)
+
+screenWidth :: Int
+screenWidth = 58
+
+data AnsiColor
+    = Black
+    | Red
+    | Green
+    | Yellow
+    | Blue
+    | Magenta
+    | Cyan
+    | White
+
+ansiColorCode :: AnsiColor -> String
+ansiColorCode Black   = "30"
+ansiColorCode Red     = "31"
+ansiColorCode Green   = "32"
+ansiColorCode Yellow  = "33"
+ansiColorCode Blue    = "34"
+ansiColorCode Magenta = "35"
+ansiColorCode Cyan    = "36"
+ansiColorCode White   = "37"
+
+colorText :: AnsiColor -> String -> String
+colorText color value = "\ESC[" ++ ansiColorCode color ++ "m" ++ value ++ "\ESC[0m"
+
+boldText :: String -> String
+boldText value = "\ESC[1m" ++ value ++ "\ESC[0m"
 
 -- Fungsi parsing angka yang AMAN (mencegah runtime errors)
 readInt :: String -> Int -> Int
@@ -28,16 +56,57 @@ padLeft n s
     | length s >= n = s
     | otherwise     = replicate (n - length s) ' ' ++ s
 
+centerText :: Int -> String -> String
+centerText n s
+    | length s >= n = take n s
+    | otherwise     = let total = n - length s
+                          left  = total `div` 2
+                          right = total - left
+                      in replicate left ' ' ++ s ++ replicate right ' '
+
 -- Fungsi pencetak Header Menu
 printHeader :: String -> IO ()
 printHeader title = do
-    let line = replicate 45 '='
-    putStrLn line
-    putStrLn $ "  " ++ title
-    putStrLn line
+    let line = replicate screenWidth '='
+    putStrLn $ colorText Cyan line
+    putStrLn $ colorText Cyan $ centerText screenWidth (boldText title)
+    putStrLn $ colorText Cyan line
+
+printSectionGap :: IO ()
+printSectionGap = putStrLn ""
+
+printKeyValue :: String -> String -> IO ()
+printKeyValue label value =
+    putStrLn $ "  " ++ colorText Blue (padRight 18 label) ++ ": " ++ value
+
+printSuccess :: String -> IO ()
+printSuccess message = putStrLn $ colorText Green $ "[OK] " ++ message
+
+printWarning :: String -> IO ()
+printWarning message = putStrLn $ colorText Yellow $ "[!] " ++ message
+
+printError :: String -> IO ()
+printError message = putStrLn $ colorText Red $ "[!] " ++ message
+
+printExitScreen :: IO ()
+printExitScreen = do
+    printSectionGap
+    putStrLn $ colorText Cyan "     ░▒▓█▓▒░░▒▓█▓▒░▒▓██████████████▓▒░ ░▒▓██████▓▒░░▒▓███████▓▒░▒▓████████▓▒░"
+    putStrLn $ colorText Cyan "     ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░"
+    putStrLn $ colorText Cyan "     ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░"
+    putStrLn $ colorText Cyan "     ░▒▓████████▓▒░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓████████▓▒░▒▓███████▓▒░  ░▒▓█▓▒░"
+    putStrLn $ colorText Cyan "     ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░"
+    putStrLn $ colorText Cyan "     ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░"
+    putStrLn $ colorText Cyan "     ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░"
+    putStrLn ""
+    putStrLn $ colorText Green "  Mungkin Kita memang harus berpisah untuk tumbuh, bukan untuk melupakan. See you later."
+    printSectionGap
+    putStrLn $ colorText Yellow "  Bukan selamat tinggal, tapi sampai bertemu kembali di cerita kehidupan yang berbeda."
+    putStrLn $ colorText Yellow "  - HMart Cashier System -"
 
 -- Fungsi untuk mendapatkan TimeStamp waktu saat checkout
 getTimeStamp :: IO String
 getTimeStamp = do
     now <- getCurrentTime
     return $ formatTime defaultTimeLocale "%d/%m/%Y %H:%M" now
+
