@@ -19,3 +19,18 @@ executable hmart
     hs-source-dirs:     src
     default-language:   Haskell2010
     ghc-options:        -Wall -Wno-unused-matches
+
+test-suite hmart-test
+    type:               exitcode-stdio-1.0
+    main-is:            Main.hs
+    hs-source-dirs:     test
+                        src
+    other-modules:      Types
+                        Utils
+                        Products
+                        Cart
+                        Reports
+    build-depends:      base >= 4.14,
+                        time >= 1.9
+    default-language:   Haskell2010
+    ghc-options:        -Wall -Wno-unused-matches
