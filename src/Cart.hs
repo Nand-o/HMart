@@ -42,47 +42,41 @@ tambahKeKeranjang :: Catalog -> Cart -> IO Cart
 tambahKeKeranjang catalog cart = do
     lihatDaftarBarang catalog
     printSectionGap
-    putStr "\nID barang: "; idStr <- getLine
-    putStr "Jumlah   : "; qtyStr <- getLine
+    targetId <- promptInt "\nID barang: " (> 0) "ID barang harus berupa angka lebih dari 0."
+    qty <- promptInt "Jumlah   : " (> 0) "Jumlah harus berupa angka lebih dari 0."
     
-    let targetId = readInt idStr 0
-        qty      = readInt qtyStr 0
-        found    = filter (\p -> productId p == targetId) catalog -- HOF: filter
+    let found = filter (\p -> productId p == targetId) catalog -- HOF: filter
         
-    if qty <= 0
-        then do 
-            printWarning "Jumlah harus lebih dari 0."
+    case found of
+        [] -> do 
+            printWarning "Barang tidak ditemukan."
             return cart
-        else case found of
-            [] -> do 
-                printWarning "Barang tidak ditemukan."
-                return cart
-            (p:_) -> do
-                -- LIST COMPREHENSION (LC-2): Hitung jumlah barang ini yang sudah ada di keranjang
-                let sudahDiKeranjang = sum [cartQty c | c <- cart, productId (cartProduct c) == targetId]
-                    totalQty = sudahDiKeranjang + qty
-                    
-                if totalQty > productStock p
-                    then do
-                        printWarning $ "Stok tidak mencukupi. Stok tersedia: " ++ show (productStock p)
-                        return cart
-                    else do
-                        let alreadyIn = findIndex (\c -> productId (cartProduct c) == targetId) cart
-                        case alreadyIn of
-                            Nothing -> do
-                                printSectionGap
-                                printSuccess $ productName p ++ " ditambahkan ke keranjang."
-                                return (cart ++ [CartItem p qty])
-                            Just _ -> do
-                                -- HOF: map untuk update QTY item yang sudah ada
-                                let newCart = map (\c -> 
-                                                if productId (cartProduct c) == targetId
-                                                then c { cartQty = cartQty c + qty }
-                                                else c
-                                            ) cart
-                                printSectionGap
-                                printSuccess "Jumlah barang di keranjang diperbarui."
-                                return newCart
+        (p:_) -> do
+            -- LIST COMPREHENSION (LC-2): Hitung jumlah barang ini yang sudah ada di keranjang
+            let sudahDiKeranjang = sum [cartQty c | c <- cart, productId (cartProduct c) == targetId]
+                totalQty = sudahDiKeranjang + qty
+                
+            if totalQty > productStock p
+                then do
+                    printWarning $ "Stok tidak mencukupi. Stok tersedia: " ++ show (productStock p)
+                    return cart
+                else do
+                    let alreadyIn = findIndex (\c -> productId (cartProduct c) == targetId) cart
+                    case alreadyIn of
+                        Nothing -> do
+                            printSectionGap
+                            printSuccess $ productName p ++ " ditambahkan ke keranjang."
+                            return (cart ++ [CartItem p qty])
+                        Just _ -> do
+                            -- HOF: map untuk update QTY item yang sudah ada
+                            let newCart = map (\c -> 
+                                            if productId (cartProduct c) == targetId
+                                            then c { cartQty = cartQty c + qty }
+                                            else c
+                                        ) cart
+                            printSectionGap
+                            printSuccess "Jumlah barang di keranjang diperbarui."
+                            return newCart
 
 -- Menghapus item dari keranjang menggunakan List Comprehension
 hapusDariKeranjang :: Cart -> IO Cart
@@ -93,18 +87,12 @@ hapusDariKeranjang cart
     | otherwise = do
         lihatKeranjang cart
         printSectionGap
-        putStr "\nNomor urut item yang ingin dihapus: "; noStr <- getLine
-        let no = readInt noStr 0
-        if no < 1 || no > length cart
-            then do 
-                printWarning "Nomor urut tidak valid."
-                return cart
-            else do
-                -- LIST COMPREHENSION (LC-1): Ambil semua item yang nomor urutnya BUKAN 'no'
-                let newCart = [item | (i, item) <- zip [1..] cart, i /= no]
-                printSectionGap
-                printSuccess "Item berhasil dihapus dari keranjang."
-                return newCart
+        no <- promptInt "\nNomor urut item yang ingin dihapus: " (\n -> n >= 1 && n <= length cart) "Nomor urut tidak valid."
+        -- LIST COMPREHENSION (LC-1): Ambil semua item yang nomor urutnya BUKAN 'no'
+        let newCart = [item | (i, item) <- zip [1..] cart, i /= no]
+        printSectionGap
+        printSuccess "Item berhasil dihapus dari keranjang."
+        return newCart
 
 -- Checkout dan simpan transaksi
 checkout :: Catalog -> Cart -> History -> IO (Catalog, Cart, History)
@@ -115,9 +103,8 @@ checkout catalog cart history = do
     lihatKeranjang cart
     printSectionGap
     printKeyValue "TOTAL BELANJA" ("Rp " ++ formatNum total)
-    putStr "Uang pelanggan: Rp"; paidStr <- getLine
-    let paid = readInt paidStr 0
-    
+    paid <- promptInt "Uang pelanggan: Rp" (>= 0) "Uang harus berupa angka 0 atau lebih."
+
     if paid < total
         then do
             printSectionGap
@@ -126,7 +113,7 @@ checkout catalog cart history = do
             return (catalog, cart, history)
         else do
             let change = paid - total
-            let newTransId = length history + 1
+                newTransId = length history + 1
             timestamp <- getTimeStamp
             
             let newTrans = Transaction newTransId cart total paid change timestamp

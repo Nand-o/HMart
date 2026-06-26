@@ -49,17 +49,14 @@ tambahBarang catalog = do
     printHeader "Tambah Barang Baru"
     printSectionGap
     putStr "Nama barang      : "; nama <- getLine
-    putStr "Harga satuan (Rp): "; hargaStr <- getLine
-    putStr "Stok awal        : "; stokStr <- getLine
+    harga <- promptInt "Harga satuan (Rp): " (> 0) "Harga harus berupa angka lebih dari 0."
+    stok  <- promptInt "Stok awal        : " (>= 0) "Stok harus berupa angka 0 atau lebih."
     
     let newId = if null catalog then 1 else productId (last catalog) + 1
-        -- Wajib menggunakan readInt dari Utils.hs
-        harga = readInt hargaStr 0 
-        stok  = readInt stokStr 0  
 
-    if null nama || harga <= 0 || stok < 0
+    if null nama
         then do
-            putStrLn "[!] Input tidak valid. Nama tidak boleh kosong, harga > 0, stok >= 0."
+            putStrLn "[!] Input tidak valid. Nama tidak boleh kosong."
             return catalog
         else do
             let prod = Product newId nama harga stok
@@ -72,25 +69,25 @@ editBarang :: Catalog -> IO Catalog
 editBarang catalog = do
     lihatDaftarBarang catalog
     printSectionGap
-    putStr "\nID barang yang akan diedit: "; idStr <- getLine
-    let targetId = readInt idStr 0
-        -- HOF: filter
-        found = filter (\p -> productId p == targetId) catalog
+    targetId <- promptInt "\nID barang yang akan diedit: " (> 0) "ID barang harus berupa angka lebih dari 0."
+    let found = filter (\p -> productId p == targetId) catalog
         
     if null found
         then do 
             printWarning "Barang tidak ditemukan."
             return catalog
         else do
-            let lama = head found
+            let lama = case found of
+                    (item:_) -> item
+                    [] -> error "Inkonistensi data: barang yang dicari seharusnya ada."
             putStrLn $ "\nMengedit: " ++ productName lama
             putStr "Nama baru  (Enter=skip): "; namaBaru <- getLine
-            putStr "Harga baru (Enter=skip): "; hargaStr <- getLine
-            putStr "Stok baru  (Enter=skip): "; stokStr <- getLine
+            hargaBaru <- promptMaybeInt "Harga baru (Enter=skip): " (> 0) "Harga baru harus berupa angka lebih dari 0 atau kosong untuk skip."
+            stokBaru <- promptMaybeInt "Stok baru  (Enter=skip): " (>= 0) "Stok baru harus berupa angka 0 atau lebih atau kosong untuk skip."
             
             let finalNama  = if null namaBaru then productName lama else namaBaru
-                finalHarga = if null hargaStr then productPrice lama else readInt hargaStr (productPrice lama)
-                finalStok  = if null stokStr  then productStock lama else readInt stokStr (productStock lama)
+                finalHarga = maybe (productPrice lama) id hargaBaru
+                finalStok  = maybe (productStock lama) id stokBaru
                 
                 -- HOF: map untuk update spesifik 1 elemen
                 newCatalog = map (\p -> 
@@ -108,10 +105,8 @@ hapusBarang :: Catalog -> IO Catalog
 hapusBarang catalog = do
     lihatDaftarBarang catalog
     printSectionGap
-    putStr "\nID barang yang akan dihapus: "; idStr <- getLine
-    let targetId = readInt idStr 0
-        -- HOF: filter untuk membuang barang
-        newCatalog = filter (\p -> productId p /= targetId) catalog
+    targetId <- promptInt "\nID barang yang akan dihapus: " (> 0) "ID barang harus berupa angka lebih dari 0."
+    let newCatalog = filter (\p -> productId p /= targetId) catalog
         
     if length newCatalog == length catalog
         then printWarning "Barang tidak ditemukan."

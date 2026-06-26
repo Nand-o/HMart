@@ -39,6 +39,37 @@ readInt str defaultValue =
         [(n, "")] -> n             -- Jika parsing berhasil, kembalikan nilai yang di-parse
         _         -> defaultValue  -- Jika parsing gagal, kembalikan nilai default
 
+-- Parsing angka yang lebih ketat: gagal jika input tidak murni angka
+parseInt :: String -> Maybe Int
+parseInt str =
+    case reads str :: [(Int, String)] of
+        [(n, "")] -> Just n
+        _          -> Nothing
+
+-- Meminta input angka sampai valid
+promptInt :: String -> (Int -> Bool) -> String -> IO Int
+promptInt prompt isValid errorMessage = do
+    putStr prompt
+    input <- getLine
+    case parseInt input of
+        Just value | isValid value -> return value
+        _ -> do
+            printWarning errorMessage
+            promptInt prompt isValid errorMessage
+
+-- Meminta input angka opsional: Enter untuk skip, angka lain harus valid
+promptMaybeInt :: String -> (Int -> Bool) -> String -> IO (Maybe Int)
+promptMaybeInt prompt isValid errorMessage = do
+    putStr prompt
+    input <- getLine
+    if null input
+        then return Nothing
+        else case parseInt input of
+            Just value | isValid value -> return (Just value)
+            _ -> do
+                printWarning errorMessage
+                promptMaybeInt prompt isValid errorMessage
+
 -- Fungsi format Rupiah
 formatNum :: Int -> String
 formatNum n
