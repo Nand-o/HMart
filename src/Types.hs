@@ -28,3 +28,10 @@ data Transaction = Transaction
 type Catalog = [Product]
 type Cart    = [CartItem]
 type History = [Transaction]
+
+-- State utama aplikasi agar alur menu tidak perlu meneruskan tiga parameter terpisah
+data AppState = AppState
+    { appCatalog :: Catalog
+    , appCart    :: Cart
+    , appHistory :: History
+    } deriving (Show, Eq)

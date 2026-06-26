@@ -53,8 +53,11 @@ menuKelolaBarang catalog = do
             menuKelolaBarang catalog
 
 -- | 3. Loop Sub-Menu: Transaksi Penjualan
-menuTransaksi :: Catalog -> Cart -> History -> IO (Catalog, Cart, History)
-menuTransaksi catalog cart history = do
+menuTransaksi :: AppState -> IO AppState
+menuTransaksi appState = do
+    let catalog = appCatalog appState
+        cart = appCart appState
+        history = appHistory appState
     printSectionGap
     printHeader "Transaksi Penjualan"
     printSectionGap
@@ -73,28 +76,34 @@ menuTransaksi catalog cart history = do
     case choice of
         "1" -> do
             newCart <- tambahKeKeranjang catalog cart
-            menuTransaksi catalog newCart history
+            menuTransaksi appState { appCart = newCart }
         "2" -> do
             lihatKeranjang cart
-            menuTransaksi catalog cart history
+            menuTransaksi appState
         "3" -> do
             newCart <- hapusDariKeranjang cart
-            menuTransaksi catalog newCart history
+            menuTransaksi appState { appCart = newCart }
         "4" -> do
             if null cart
                 then do
                     printWarning "Keranjang kosong. Tambahkan barang terlebih dahulu."
-                    menuTransaksi catalog cart history
-                else checkout catalog cart history -- checkout me-return (Catalog, Cart, History)
+                    menuTransaksi appState
+                else do
+                    (newCatalog, newCart, newHistory) <- checkout catalog cart history
+                    menuTransaksi AppState
+                        { appCatalog = newCatalog
+                        , appCart = newCart
+                        , appHistory = newHistory
+                        }
         "5" -> do
             printSectionGap
             printSuccess "Transaksi dibatalkan. Keranjang dikosongkan."
             printSectionGap
-            return (catalog, [], history)
-        "0" -> return (catalog, cart, history)
+            return appState { appCart = [] }
+        "0" -> return appState
         _   -> do 
             printWarning "Pilihan tidak valid."
-            menuTransaksi catalog cart history
+            menuTransaksi appState
 
 -- | 4. Loop Sub-Menu: Riwayat Transaksi
 menuRiwayat :: History -> IO ()
@@ -168,8 +177,10 @@ tentangProgram = do
     putStrLn "    [v] Algebraic Data Types & Pattern Matching"
 
 -- | 7. Loop Menu Utama (Jantung Program)
-mainMenu :: Bool -> Catalog -> Cart -> History -> IO ()
-mainMenu fromSubmenu catalog cart history = do
+mainMenu :: Bool -> AppState -> IO ()
+mainMenu fromSubmenu appState = do
+    let catalog = appCatalog appState
+        history = appHistory appState
     if fromSubmenu then clearScreen else return ()
     printSectionGap
     printHeader "HMart Cashier"
@@ -186,24 +197,24 @@ mainMenu fromSubmenu catalog cart history = do
     case choice of
         "1" -> do
             newCatalog <- menuKelolaBarang catalog
-            mainMenu True newCatalog cart history
+            mainMenu True appState { appCatalog = newCatalog }
         "2" -> do
-            (newCatalog, newCart, newHistory) <- menuTransaksi catalog cart history
-            mainMenu True newCatalog newCart newHistory
+            newState <- menuTransaksi appState
+            mainMenu True newState
         "3" -> do
             menuRiwayat history
-            mainMenu True catalog cart history
+            mainMenu True appState
         "4" -> do
             menuLaporan catalog history
-            mainMenu True catalog cart history
+            mainMenu True appState
         "5" -> do
             clearScreen
             tentangProgram
-            mainMenu False catalog cart history
+            mainMenu False appState
         "0" -> printExitScreen
         _   -> do
             printWarning "Pilihan tidak valid. Masukkan angka 0-5."
-            mainMenu True catalog cart history
+            mainMenu True appState
 
 -- | 8. Entry Point Aplikasi
 main :: IO ()
@@ -211,4 +222,8 @@ main = do
     hSetBuffering stdout NoBuffering -- Agar output input selaras di terminal
     putStrLn "\nSelamat datang di HMart Cashier System!"
     -- Inisialisasi awal program: catalog terisi data dummy, cart kosong, history kosong
-    mainMenu False defaultProducts [] []
+    mainMenu False AppState
+        { appCatalog = defaultProducts
+        , appCart = []
+        , appHistory = []
+        }
